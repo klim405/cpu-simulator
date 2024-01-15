@@ -3,7 +3,7 @@ import argparse
 
 def str_to_byte(instruction: str) -> bytes:
     val = int(instruction, base=2)
-    return val.to_bytes(4, 'big')
+    return val.to_bytes(5, 'big')
 
 
 def dump(src: str, dest: str):
@@ -15,8 +15,8 @@ def dump(src: str, dest: str):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--source', default='microcode.txt')
-    parser.add_argument('-t', '--target', default='microcode.bin')
+    parser.add_argument('-s', '--source', default='files/microcode.txt')
+    parser.add_argument('-t', '--target', default='files/microcode.bin')
     args = parser.parse_args()
     dump(args.source, args.target)
 

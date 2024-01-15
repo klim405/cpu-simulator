@@ -1,7 +1,10 @@
-from microcode import MicroInstruction
-from signals import ALUSourceASignal, ALUSourceBSignal, WriteSignal, ALUSignal, WriteFlagSignal, WRITE_NZVC_SIGNALS
-from utils.bits import replace_bits, join_bits
+from typing import Literal
 
+from microcode import MicroInstruction
+from signals import ALUSourceASignal, ALUSourceBSignal, WriteSignal, ALUSignal, FlagSignal, WRITE_NZVCB_SIGNALS, \
+    ALUAddCSignal
+from utils.bits import replace_bits, join_bits
+from utils.files import clean_memory
 
 REG_MASK = 0b11111111
 
@@ -40,7 +43,7 @@ class ALU:
     def _add(self, c_flag_value: int = 0):
         if c_flag_value not in [0, 1]:
             raise RuntimeError(f'Warning: C flag value is not be able to equal {c_flag_value}')
-        self.out = self.src_a + self.src_b
+        self.out = self.src_a + self.src_b + c_flag_value
 
     def _sub(self):
         self.not_a()
@@ -84,7 +87,7 @@ class DataPath:
     # SrcA
     ac = 0  # 001
     br = 0  # 010
-    sr = 0  # 011
+    sr = 2  # 011
     ir = 0  # 100 Read only
 
     # SrcB
@@ -164,15 +167,19 @@ class DataPath:
             case WriteSignal.WRITE_ARL:
                 self.ar_l = self.ALU.get_out()
 
-    def write_flag(self, signal: WriteFlagSignal):
-        if signal in WRITE_NZVC_SIGNALS:
-            self.sr = replace_bits(self.sr, self.ALU.get_nzvc() << 4, signal.value)
+    def write_flag(self, signal: FlagSignal, use_alu_out=False) -> None:
+        if use_alu_out:
+            reg_in = self.ALU.get_out()
+        else:
+            reg_in = (self.ALU.get_nzvc() << 4) + (self.ALU.get_nzvc()) & 1 + (self.sr & 0b1110)
+        if signal in WRITE_NZVCB_SIGNALS:
+            self.sr = replace_bits(self.sr, reg_in, signal.value)
         else:
             self.sr = replace_bits(self.sr, self.ALU.get_out(), signal.value)
 
-    def __get_ar_16(self):
+    def __get_ar_16(self) -> int:
         """ ARH(8-bit), ARL(8-bit) -> AR(16-bit) """
-        return (self.ar_h < 8) + self.ar_l
+        return (self.ar_h << 8) + self.ar_l
 
     def load_mem(self):
         """ MEM(AR) -> DR """
@@ -186,34 +193,45 @@ class DataPath:
             mem.seek(self.__get_ar_16())
             mem.write(self.dr.to_bytes(1, 'big', signed=False))
 
-    def run_alu(self, alu_signal: ALUSignal, not_a_signal: int | bool, use_c_signal: int | bool):
+    def run_alu(self, alu_signal: ALUSignal, not_a_signal: int | bool, add_c_signal: ALUAddCSignal):
         if not_a_signal:
             self.ALU.not_a()
-        if use_c_signal:
+        if add_c_signal == ALUAddCSignal.ADD_C:
             c = (self.sr >> 4) & 1
             self.ALU.calc_output(alu_signal, c)
+        elif add_c_signal == ALUAddCSignal.ADD_B:
+            buff_c = self.sr & 1
+            self.ALU.calc_output(alu_signal, buff_c)
+        elif add_c_signal == ALUAddCSignal.ADD_1:
+            self.ALU.calc_output(alu_signal, 1)
         else:
             self.ALU.calc_output(alu_signal)
 
+    def get_w_flag(self) -> int:
+        return (self.sr >> 1) & 1
 
-def clean_memory(memory_filename: str = 'mem.bin'):
-    with open(memory_filename, 'wb') as mem, open('files/mem.empty.bin', 'rb') as clean_mem:
-        mem.write(clean_mem.read())
+    def __str__(self):
+        return (f'{self.ac} {self.br} {self.sr} {self.ir} {self._or} '
+                f'{self.dr} {self.cr} {self.cp_h}{self.cp_l} {self.sp_h}{self.sp_l}')
 
 
 class CPU:
     tick = 0
     mc = 0  # microcode pointer
 
-    def __init__(self, memory_filename: str = 'files/mem.bin', microcode_filename: str = 'files/microcode.bin'):
+    def __init__(
+            self,
+            memory_filename: str = 'files/mem.bin',
+            microcode_filename: str = 'files/microcode.bin',
+            log_mode: Literal['instr', 'tick'] = 'tick'):
         self.microcode_filename = microcode_filename
-        clean_memory(memory_filename)
-        self.data_path = DataPath()
+        self.data_path = DataPath(memory_filename)
+        self.log_mode = log_mode
 
     def get_instruction(self) -> MicroInstruction:
         with open(self.microcode_filename, 'rb') as microcode:
-            microcode.seek(self.mc << 4)
-            return MicroInstruction(microcode.read(4))
+            microcode.seek(self.mc * 5)
+            return MicroInstruction(microcode.read(5))
 
     def activate_alu(self, instr):
         self.data_path.read_src_a(instr.get_alu_src_a_signal())
@@ -244,10 +262,11 @@ class CPU:
             self.data_path.store_mem()
         if instr.get_load_signal():
             self.data_path.load_mem()
+        self.activate_alu(instr)
         for sig in instr.get_write_signal():
             self.data_path.write_register(sig)
         for sig in instr.get_write_flag_signals():
-            self.data_path.write_flag(sig)
+            self.data_path.write_flag(sig, use_alu_out=instr.use_alu_out_for_sr())
         self.set_next_address()
 
     def execute_instruction(self):
@@ -257,8 +276,18 @@ class CPU:
         else:
             self.execute_action_instruction(instr)
 
-    def start(self, tick_limit=10000):
-        while self.tick <= tick_limit:
+    def start(self, tick_limit=1000):
+        print('ac | br | sr | ir | or | dr | cr | cp | sp')
+        self.log()
+        while self.tick <= tick_limit and self.data_path.get_w_flag():
+            # print(self.get_instruction(), self.mc)
             self.execute_instruction()
             self.tick += 1
+            self.log()
 
+    def log(self):
+        if self.log_mode == 'tick':
+            print(self.tick, self.data_path)
+        else:
+            if self.mc == 0:
+                print(self.data_path)

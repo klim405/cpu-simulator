@@ -15,21 +15,23 @@ class WriteSignal(enum.Enum):
     WRITE_ARL = 1024  # Write address register lower byte
 
 
-class WriteFlagSignal(enum.Enum):
-    RESERVED = 1
+class FlagSignal(enum.Enum):
+    WRITE_B = 1
     WRITE_W = 2
-    WRITE_O = 8
+    WRITE_O = 4
+    WRITE_I = 8
     WRITE_C = 16
     WRITE_V = 32
     WRITE_Z = 64
     WRITE_N = 128
 
 
-WRITE_NZVC_SIGNALS = [
-    WriteFlagSignal.WRITE_N,
-    WriteFlagSignal.WRITE_Z,
-    WriteFlagSignal.WRITE_V,
-    WriteFlagSignal.WRITE_C
+WRITE_NZVCB_SIGNALS = [
+    FlagSignal.WRITE_N,
+    FlagSignal.WRITE_Z,
+    FlagSignal.WRITE_V,
+    FlagSignal.WRITE_C,
+    FlagSignal.WRITE_B
 ]
 
 
@@ -57,3 +59,10 @@ class ALUSignal(enum.Enum):
     SUB = 1
     AND = 2
     OR = 3
+
+
+class ALUAddCSignal(enum.Enum):
+    NULL = 0
+    ADD_C = 1
+    ADD_B = 2
+    ADD_1 = 3
