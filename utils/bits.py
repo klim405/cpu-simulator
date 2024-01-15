@@ -21,3 +21,4 @@ def join_bits(bits_array: List[int]):
         if bits_array[i] not in [0, 1]:
             raise TypeError('Допустимое значение элемента массива битов 0 или 1')
         bits += bits_array[i] << i
+    return bits
