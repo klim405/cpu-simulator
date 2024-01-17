@@ -10,7 +10,9 @@ MNEMONIC = {
     'NOT': 0x38,
     'INC': 0x48,
     'DEC': 0x40,
-    'NEG': 0x25,
+    'NEG': 0x4C,
+    'POP': 0x58,
+    'PUSH': 0x50
 }
 
 

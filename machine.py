@@ -4,7 +4,6 @@ from microcode import MicroInstruction
 from signals import ALUSourceASignal, ALUSourceBSignal, WriteSignal, ALUSignal, FlagSignal, WRITE_NZVCB_SIGNALS, \
     ALUAddCSignal
 from utils.bits import replace_bits, join_bits
-from utils.files import clean_memory
 
 REG_MASK = 0b11111111
 
@@ -39,6 +38,7 @@ class ALU:
                 self._and()
             case ALUSignal.OR:
                 self._or()
+        self._set_nzvc()
 
     def _add(self, c_flag_value: int = 0):
         if c_flag_value not in [0, 1]:
@@ -46,7 +46,7 @@ class ALU:
         self.out = self.src_a + self.src_b + c_flag_value
 
     def _sub(self):
-        self.not_a()
+        self.not_b()
         self._add(1)
 
     def _and(self):
@@ -212,7 +212,7 @@ class DataPath:
 
     def __str__(self):
         return (f'{self.ac} {self.br} {self.sr} {self.ir} {self._or} '
-                f'{self.dr} {self.cr} {self.cp_h}{self.cp_l} {self.sp_h}{self.sp_l}')
+                f'{self.dr} {self.cr} {hex((self.cp_h << 8) + self.cp_l)} {hex((self.sp_h << 8) + self.sp_l)}')
 
 
 class CPU:
