@@ -5,15 +5,15 @@ from signals import WriteSignal, ALUSignal, ALUSourceASignal, ALUSourceBSignal, 
 
 
 class SegmentMask(enum.Enum):
-    TYPE_MASK = (0b1, 33)
-    STORE_MASK = (0b1, 32)
-    LOAD_MASK = (0b1, 31)
-    USE_ALU_OUT_FOR_SR_MASK = (0b1, 30)
-    WRITE_MASK = (0b11111111111, 19)
+    TYPE_MASK = (0b1, 30)
+    STORE_MASK = (0b1, 29)
+    LOAD_MASK = (0b1, 28)
+    USE_ALU_OUT_FOR_SR_MASK = (0b1, 27)
+    WRITE_MASK = (0x1FF, 19)
     CONDITION_VALUE_MASK = (0b1, 27)
-    ADDR_MASK = (0b11111111, 19)
-    WRITE_FLAG_MASK = (0b11111111, 11)
-    CONDITION_MASK = (0b11111111, 11)
+    ADDR_MASK = (0xFF, 19)
+    WRITE_FLAG_MASK = (0xFF, 11)
+    CONDITION_MASK = (0xFF, 11)
     ALU_NEG_A_MASK = (0b1, 10)
     ALU_MODE_MASK = (0b11, 8)
     ALU_ADD_C_MASK = (0b11, 6)

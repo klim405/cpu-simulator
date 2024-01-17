@@ -8,11 +8,11 @@ MNEMONIC = {
     'CLC': 0x28,
     'CMC': 0x30,
     'NOT': 0x38,
-    'INC': 0x48,
-    'DEC': 0x40,
-    'NEG': 0x4C,
-    'POP': 0x58,
-    'PUSH': 0x50
+    'INC': 0x4C,
+    'DEC': 0x48,
+    'NEG': 0x40,
+    'POP': 0x50,
+    'PUSH': 0x58
 }
 
 

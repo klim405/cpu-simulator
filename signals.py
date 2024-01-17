@@ -6,13 +6,10 @@ class WriteSignal(enum.Enum):
     WRITE_BR = 2  # Write buffer register
     WRITE_DR = 4  # Write data register
     WRITE_CR = 8  # Write command register
-    WRITE_CPH = 16  # Write command pointer height byte
-    WRITE_CPL = 32  # Write command register lower byte
-    WRITE_SPH = 64  # Write stack pointer height byte
-    WRITE_SPL = 128  # Write stack register lower byte
-    WRITE_OR = 256  # Write output register
-    WRITE_ARH = 512  # Write address register height byte
-    WRITE_ARL = 1024  # Write address register lower byte
+    WRITE_CP = 16  # Write command pointer
+    WRITE_SP = 32  # Write stack register
+    WRITE_OR = 64  # Write output register
+    WRITE_AR = 128  # Write address register
 
 
 class FlagSignal(enum.Enum):
@@ -48,10 +45,8 @@ class ALUSourceBSignal(enum.Enum):
     ONE = 1
     READ_DR = 2
     READ_CR = 3
-    READ_CPH = 4
-    READ_CPL = 5
-    READ_SPH = 6
-    READ_SPL = 7
+    READ_CP = 4
+    READ_SP = 5
 
 
 class ALUSignal(enum.Enum):

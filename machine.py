@@ -93,15 +93,12 @@ class DataPath:
     # SrcB
     dr = 0  # 001
     cr = 0  # 010
-    cp_h = 0  # 011
-    cp_l = 0  # 100
-    sp_h = 0  # 101
-    sp_l = 0  # 110
+    cp = 0  # 011
+    sp = 0xff  # 100
 
     # Write only
     _or = 0
-    ar_h = 0
-    ar_l = 0
+    ar = 0
 
     def __init__(self, memory_filename: str = 'mem.bin'):
         self.memory_filename = memory_filename
@@ -131,14 +128,10 @@ class DataPath:
                 val = self.dr
             case ALUSourceBSignal.READ_CR:
                 val = self.cr
-            case ALUSourceBSignal.READ_CPH:
-                val = self.cp_h
-            case ALUSourceBSignal.READ_CPL:
-                val = self.cp_l
-            case ALUSourceBSignal.READ_SPH:
-                val = self.sp_h
-            case ALUSourceBSignal.READ_SPL:
-                val = self.sp_l
+            case ALUSourceBSignal.READ_CP:
+                val = self.cp
+            case ALUSourceBSignal.READ_SP:
+                val = self.sp
         self.ALU.set_src_b(val)
 
     def write_register(self, write_signal: WriteSignal):
@@ -152,45 +145,35 @@ class DataPath:
                 self.dr = self.ALU.get_out()
             case WriteSignal.WRITE_CR:
                 self.cr = self.ALU.get_out()
-            case WriteSignal.WRITE_CPH:
-                self.cp_h = self.ALU.get_out()
-            case WriteSignal.WRITE_CPL:
-                self.cp_l = self.ALU.get_out()
-            case WriteSignal.WRITE_SPH:
-                self.sp_h = self.ALU.get_out()
-            case WriteSignal.WRITE_SPL:
-                self.sp_l = self.ALU.get_out()
+            case WriteSignal.WRITE_CP:
+                self.cp = self.ALU.get_out()
+            case WriteSignal.WRITE_SP:
+                self.sp = self.ALU.get_out()
             case WriteSignal.WRITE_OR:
                 self._or = self.ALU.get_out()
-            case WriteSignal.WRITE_ARH:
-                self.ar_h = self.ALU.get_out()
-            case WriteSignal.WRITE_ARL:
-                self.ar_l = self.ALU.get_out()
+            case WriteSignal.WRITE_AR:
+                self.ar = self.ALU.get_out()
 
     def write_flag(self, signal: FlagSignal, use_alu_out=False) -> None:
         if use_alu_out:
             reg_in = self.ALU.get_out()
         else:
-            reg_in = (self.ALU.get_nzvc() << 4) + (self.ALU.get_nzvc()) & 1 + (self.sr & 0b1110)
+            reg_in = (self.ALU.get_nzvc() << 4) + (self.ALU.get_nzvc() & 1) + (self.sr & 0b1110)
         if signal in WRITE_NZVCB_SIGNALS:
             self.sr = replace_bits(self.sr, reg_in, signal.value)
         else:
             self.sr = replace_bits(self.sr, self.ALU.get_out(), signal.value)
 
-    def __get_ar_16(self) -> int:
-        """ ARH(8-bit), ARL(8-bit) -> AR(16-bit) """
-        return (self.ar_h << 8) + self.ar_l
-
     def load_mem(self):
         """ MEM(AR) -> DR """
         with open(self.memory_filename, 'rb') as mem:
-            mem.seek(self.__get_ar_16())
+            mem.seek(self.ar)
             self.dr = int.from_bytes(mem.read(1), 'big', signed=False)
 
     def store_mem(self):
         """ DR -> MEM(AR) """
         with open(self.memory_filename, 'r+b') as mem:
-            mem.seek(self.__get_ar_16())
+            mem.seek(self.ar)
             mem.write(self.dr.to_bytes(1, 'big', signed=False))
 
     def run_alu(self, alu_signal: ALUSignal, not_a_signal: int | bool, add_c_signal: ALUAddCSignal):
@@ -211,8 +194,10 @@ class DataPath:
         return (self.sr >> 1) & 1
 
     def __str__(self):
-        return (f'{self.ac} {self.br} {self.sr} {self.ir} {self._or} '
-                f'{self.dr} {self.cr} {hex((self.cp_h << 8) + self.cp_l)} {hex((self.sp_h << 8) + self.sp_l)}')
+        s = []
+        for i in ['ac', 'br', 'sr', 'ir', '_or', 'dr', 'cr', 'cp', 'sp']:
+            s.append(hex(getattr(self, i))[2:].zfill(2))
+        return ' | '.join(s).upper()
 
 
 class CPU:
