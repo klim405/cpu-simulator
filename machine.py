@@ -13,6 +13,7 @@ class ALU:
     src_b = 0
     out = 0
     nzvc = [0, 0, 0, 0]
+    src_c_flag = 0
 
     def set_src_a(self, val):
         self.src_a = val
@@ -27,6 +28,7 @@ class ALU:
         self.src_b = (1 << 8) - 1 - self.src_b
 
     def calc_output(self, signal: ALUSignal, c_flag_value: int = 0):
+        self.src_c_flag = c_flag_value
         match signal:
             case ALUSignal.ADD:
                 self._add(c_flag_value)
@@ -62,10 +64,11 @@ class ALU:
         self.nzvc[2] = int(self.out & 255 == 0)
 
     def _set_v(self):
-        a7 = (self.src_a >> 7) & 1
-        b7 = (self.src_b >> 7) & 1
-        not_y7 = (invert_bits(self.out) >> 7) & 1
-        self.nzvc[1] = (a7 & b7) | (a7 & not_y7) | (b7 & not_y7)
+        a = self.src_a & (128 - 1)
+        b = self.src_b & (128 - 1)
+        c7 = (a + b + self.src_c_flag) >> 7
+        c8 = self.out >> 8
+        self.nzvc[1] = c7 ^ c8
 
     def _set_c(self):
         self.nzvc[0] = int(self.out & 256 != 0)
