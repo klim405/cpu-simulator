@@ -3,7 +3,7 @@ from typing import Literal
 from microcode import MicroInstruction
 from signals import ALUSourceASignal, ALUSourceBSignal, WriteSignal, ALUSignal, FlagSignal, WRITE_NZVCB_SIGNALS, \
     ALUAddCSignal
-from utils.bits import replace_bits, join_bits
+from utils.bits import replace_bits, join_bits, invert_bits
 
 REG_MASK = 0b11111111
 
@@ -64,8 +64,8 @@ class ALU:
     def _set_v(self):
         a7 = (self.src_a >> 7) & 1
         b7 = (self.src_b >> 7) & 1
-        not_y7 = (~self.out >> 7) & 1
-        self.nzvc[1] = a7 & b7 | a7 & not_y7 | b7 & not_y7
+        not_y7 = (invert_bits(self.out) >> 7) & 1
+        self.nzvc[1] = (a7 & b7) | (a7 & not_y7) | (b7 & not_y7)
 
     def _set_c(self):
         self.nzvc[0] = int(self.out & 256 != 0)
@@ -272,7 +272,7 @@ class CPU:
 
     def log(self):
         if self.log_mode == 'tick':
-            print(self.tick, self.data_path)
+            print(self.tick, self.mc, self.data_path)
         else:
             if self.mc == 0:
                 print(self.data_path)

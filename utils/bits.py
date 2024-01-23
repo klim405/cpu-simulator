@@ -6,6 +6,12 @@ def invert_bits(bits: int, length=8):
     return (1 << length) - 1 - bits
 
 
+def int_to_signed(val: int, length=8):
+    if val < 0:
+        return (invert_bits(abs(val), length) + 1) & (2**length - 1)
+    return val
+
+
 def replace_bits(old_val: int, new_val: int, mask: int, length=8):
     """ Заменяет old_val[i] = new_val[i], где mask[i] = 1 """
     t = old_val & invert_bits(mask, length)
