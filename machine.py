@@ -3,7 +3,8 @@ from typing import Literal
 from microcode import MicroInstruction
 from signals import ALUSourceASignal, ALUSourceBSignal, WriteSignal, ALUSignal, FlagSignal, WRITE_NZVCB_SIGNALS, \
     ALUAddCSignal
-from utils.bits import replace_bits, join_bits, invert_bits
+from utils.bits import replace_bits, join_bits
+from utils.io import convert_from_ascii, InputFile
 
 REG_MASK = 0b11111111
 
@@ -196,11 +197,80 @@ class DataPath:
     def get_w_flag(self) -> int:
         return (self.sr >> 1) & 1
 
+    def is_i_flag_set(self) -> bool:
+        return bool((self.sr >> 3) & 1)
+
+    def is_o_flag_set(self) -> bool:
+        return bool((self.sr >> 2) & 1)
+
+    def write_input(self, val: int):
+        self.sr = replace_bits(self.sr, 255, 0b1000)
+        self.ir = val
+
+    def reed_output(self) -> int:
+        self.sr = replace_bits(self.sr, 0, 0b0100)
+        return self._or
+
     def __str__(self):
         s = []
-        for i in ['ac', 'br', 'sr', 'ir', '_or', 'dr', 'cr', 'cp', 'sp']:
+        for i in ['ac', 'br', 'sr', 'ir', '_or', 'ar', 'dr', 'cr', 'cp', 'sp']:
             s.append(hex(getattr(self, i))[2:].zfill(2))
         return ' | '.join(s).upper()
+
+
+class Logger:
+    def __init__(self, log_filename: str = 'files/temp/log.txt',
+                 log_mode: Literal['instr', 'tick'] = 'tick'):
+        self.log_filename = log_filename
+        self.log_mode = log_mode
+        self.data_path: DataPath | None = None
+        self.cpu: CPU | None = None
+        self.log_counter = 0
+
+    def bound(self, data_path: DataPath, cpu: 'CPU'):
+        self.data_path = data_path
+        self.cpu = cpu
+
+    def write_in_log(self, line):
+        with open(self.log_filename, 'a') as log_file:
+            log_file.write(f'{line}\n')
+
+    def log(self) -> None:
+        if self.cpu is None or self.data_path is None:
+            raise Exception('CPU or DataPath is None')
+        self.log_label()
+        if self.log_mode == 'instr' and self.cpu.mc == 0:
+            self.write_in_log(self.get_reg_vals())
+            self.log_counter += 1
+        elif self.log_mode == 'tick':
+            self.write_in_log(self.get_reg_and_tick_vals())
+            self.log_counter += 1
+
+    def log_label(self) -> None:
+        if self.log_counter % 20 == 0:
+            if self.log_mode == 'tick':
+                self.write_in_log(self.get_reg_labels_with_tick())
+            else:
+                self.write_in_log(self.get_reg_labels())
+
+    def get_reg_vals(self) -> str:
+        s = []
+        for i in ['cp', 'cr', 'ac', 'br', 'sr', 'ir', '_or', 'ar', 'dr', 'sp']:
+            s.append(hex(getattr(self.data_path, i))[2:].zfill(2))
+        return ' | '.join(s).upper()
+
+    def get_reg_and_tick_vals(self) -> str:
+        return f'{self.cpu.tick:5} | {self.cpu.mc:3} | {self.get_reg_vals()}'
+
+    @staticmethod
+    def get_reg_labels() -> str:
+        s = ['cp', 'cr', 'ac', 'br', 'sr', 'ir', 'or', 'ar', 'dr', 'sp']
+        return ' - '.join(s).upper()
+
+    @staticmethod
+    def get_reg_labels_with_tick() -> str:
+        s = [' tick', ' mc', 'cp', 'cr', 'ac', 'br', 'sr', 'ir', 'or', 'ar', 'dr', 'sp']
+        return ' - '.join(s).upper()
 
 
 class CPU:
@@ -209,12 +279,18 @@ class CPU:
 
     def __init__(
             self,
+            logger: Logger,
             memory_filename: str = 'files/mem.bin',
             microcode_filename: str = 'files/microcode.bin',
-            log_mode: Literal['instr', 'tick'] = 'tick'):
+            input_filename: str = 'files/input.txt',
+            output_filename: str = 'files/output.txt'
+    ):
         self.microcode_filename = microcode_filename
+        self.input_file = InputFile(input_filename)
+        self.output_filename = output_filename
         self.data_path = DataPath(memory_filename)
-        self.log_mode = log_mode
+        self.logger = logger
+        self.logger.bound(self.data_path, self)
 
     def get_instruction(self) -> MicroInstruction:
         with open(self.microcode_filename, 'rb') as microcode:
@@ -265,17 +341,20 @@ class CPU:
             self.execute_action_instruction(instr)
 
     def start(self, tick_limit=1000):
-        print('ac | br | sr | ir | or | dr | cr | cp | sp')
-        self.log()
+        self.logger.log()
         while self.tick <= tick_limit and self.data_path.get_w_flag():
-            # print(self.get_instruction(), self.mc)
+            self.try_to_read_out()
+            self.try_to_write_inp()
             self.execute_instruction()
             self.tick += 1
-            self.log()
+            print(self.tick, self.data_path)
+            self.logger.log()
 
-    def log(self):
-        if self.log_mode == 'tick':
-            print(self.tick, self.mc, self.data_path)
-        else:
-            if self.mc == 0:
-                print(self.data_path)
+    def try_to_read_out(self):
+        if self.data_path.is_o_flag_set() and self.mc == 0:
+            with open(self.output_filename, 'a') as out:
+                out.write(convert_from_ascii(self.data_path.reed_output()))
+
+    def try_to_write_inp(self):
+        if not self.data_path.is_i_flag_set() and self.input_file.has_next():
+            self.data_path.write_input(self.input_file.get_symbol())

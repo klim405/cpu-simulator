@@ -92,7 +92,11 @@ class ASMMatch:
         return int(self.match.group(13))
 
     def get_addr_mode(self):
-        addr = self.match.group(12) if self.match.group(12) else '+'
+        addr = '+'
+        if self.match.group(12):
+            addr = self.match.group(12)
+        if self.match.group(9):
+            addr = self.match.group(9)
         match addr:
             case '@':
                 return AddressMode.ABSOLUTE
@@ -122,7 +126,7 @@ class ASMMatch:
 
     def get_size(self) -> int:
         if self.is_string():
-            return len(self.to_string()) + 1
+            return len(self.to_string()) + 2
         elif self.has_command_arg():
             return 2
         else:
@@ -191,7 +195,8 @@ class TranslatorASM:
             return int_to_signed(match.to_int()).to_bytes(1, 'big')
         elif match.is_string():
             val = match.to_string()
-            return len(val).to_bytes(1, 'big') + val.encode('ascii')
+            return ((self.current_addr + 1).to_bytes(1, 'big') +
+                    len(val).to_bytes(1, 'big') + val.encode('ascii'))
         elif match.is_command():
             return self.encode_command(match)
 
@@ -209,13 +214,15 @@ class TranslatorASM:
 
     def calc_label_addr(self, match: ASMMatch) -> int:
         label = match.get_arg_as_label()
-        label_sum, label_section = self.labels[label]
-        base_offset = label_sum - self.current_addr
-        if label_section == 'text':
-            base_offset += self.text_offset
-        else:
-            base_offset += self.data_offset
-        return base_offset
+        label_addr, label_section = self.labels[label]
+        if match.get_addr_mode() == AddressMode.BASE:
+            base_offset = label_addr - self.current_addr
+            if label_section == 'text':
+                base_offset += self.text_offset
+            else:
+                base_offset += self.data_offset
+            return base_offset
+        return label_addr + self.text_offset if label_section == 'text' else self.data_offset
 
     @staticmethod
     def calc_int_addr(match: ASMMatch) -> int:
