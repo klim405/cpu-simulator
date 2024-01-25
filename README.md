@@ -1,6 +1,8 @@
 # cpu-simulator
 Автор: Климович Вадим, P33091
-alg | acc | neum | mc | tick | struct | stream | port | pstr | prob2 | 8bit
+```text
+asm | acc | neum | mc | tick | struct | stream | port | pstr | prob2 | 8bit
+```
 
 ## Язык программирования
 ```text
