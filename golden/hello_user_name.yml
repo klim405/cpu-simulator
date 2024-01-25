@@ -1,0 +1,154 @@
+script: |-
+  .data
+  curr_sym_ptr: 0
+  last_sym_ptr: 0
+
+  str1_ptr: 'Hello, '
+  str2_ptr: '!'
+
+
+  .text
+  main:   ld    str1_ptr
+          call  print
+          call  io
+          ld    str2_ptr
+          call  print
+          hlt
+
+  io:      in
+           out
+           jiu io_stop
+           jump io
+  io_stop: ret
+
+  print:  st    curr_sym_ptr
+          add  ~curr_sym_ptr
+          st    last_sym_ptr
+  p_loop: ld    curr_sym_ptr
+          inc
+          st    curr_sym_ptr
+          cmp   last_sym_ptr
+          jgt   exit_l
+          ld   ~curr_sym_ptr
+          out
+          jump  p_loop
+  exit_l: ret
+input: |-
+  Alice
+output: |-
+  Hello, Alice!
+out_log: |
+  CP - CR - AC - BR - SR - IR - OR - AR - DR - SP
+  00 | 00 | 00 | 00 | 02 | 00 | 00 | 00 | 00 | FF
+  02 | A0 | 99 | 00 | 8A | 41 | 00 | 98 | 99 | FF
+  12 | B0 | 99 | FF | 8A | 41 | 00 | FF | 04 | FE
+  14 | A8 | 99 | FF | 8A | 41 | 00 | 96 | 99 | FE
+  16 | 91 | A0 | FF | 8A | 41 | 00 | 99 | 07 | FE
+  18 | A8 | A0 | FF | 8A | 41 | 00 | 97 | A0 | FE
+  1A | A0 | 99 | FF | 8A | 41 | 00 | 96 | 99 | FE
+  1B | 4C | 9A | FF | 8A | 41 | 00 | 1A | 4C | FE
+  1D | A8 | 9A | FF | 8A | 41 | 00 | 96 | 9A | FE
+  1F | 98 | 9A | FF | 8A | 41 | 00 | 97 | A0 | FE
+  21 | E0 | 9A | FF | 8A | 41 | 00 | 20 | 26 | FE
+  23 | A1 | 48 | FF | 0A | 41 | 00 | 9A | 48 | FE
+  24 | 60 | 48 | FF | 0E | 41 | 48 | 23 | 60 | FE
+  18 | B8 | 48 | FF | 0A | 41 | 48 | 25 | 18 | FE
+  1A | A0 | 9A | FF | 8A | 41 | 48 | 96 | 9A | FE
+  1B | 4C | 9B | FF | 8A | 41 | 48 | 1A | 4C | FE
+  1D | A8 | 9B | FF | 8A | 41 | 48 | 96 | 9B | FE
+  1F | 98 | 9B | FF | 8A | 41 | 48 | 97 | A0 | FE
+  21 | E0 | 9B | FF | 8A | 41 | 48 | 20 | 26 | FE
+  23 | A1 | 65 | FF | 0A | 41 | 48 | 9B | 65 | FE
+  CP - CR - AC - BR - SR - IR - OR - AR - DR - SP
+  24 | 60 | 65 | FF | 0E | 41 | 65 | 23 | 60 | FE
+  18 | B8 | 65 | FF | 0A | 41 | 65 | 25 | 18 | FE
+  1A | A0 | 9B | FF | 8A | 41 | 65 | 96 | 9B | FE
+  1B | 4C | 9C | FF | 8A | 41 | 65 | 1A | 4C | FE
+  1D | A8 | 9C | FF | 8A | 41 | 65 | 96 | 9C | FE
+  1F | 98 | 9C | FF | 8A | 41 | 65 | 97 | A0 | FE
+  21 | E0 | 9C | FF | 8A | 41 | 65 | 20 | 26 | FE
+  23 | A1 | 6C | FF | 0A | 41 | 65 | 9C | 6C | FE
+  24 | 60 | 6C | FF | 0E | 41 | 6C | 23 | 60 | FE
+  18 | B8 | 6C | FF | 0A | 41 | 6C | 25 | 18 | FE
+  1A | A0 | 9C | FF | 8A | 41 | 6C | 96 | 9C | FE
+  1B | 4C | 9D | FF | 8A | 41 | 6C | 1A | 4C | FE
+  1D | A8 | 9D | FF | 8A | 41 | 6C | 96 | 9D | FE
+  1F | 98 | 9D | FF | 8A | 41 | 6C | 97 | A0 | FE
+  21 | E0 | 9D | FF | 8A | 41 | 6C | 20 | 26 | FE
+  23 | A1 | 6C | FF | 0A | 41 | 6C | 9D | 6C | FE
+  24 | 60 | 6C | FF | 0E | 41 | 6C | 23 | 60 | FE
+  18 | B8 | 6C | FF | 0A | 41 | 6C | 25 | 18 | FE
+  1A | A0 | 9D | FF | 8A | 41 | 6C | 96 | 9D | FE
+  1B | 4C | 9E | FF | 8A | 41 | 6C | 1A | 4C | FE
+  CP - CR - AC - BR - SR - IR - OR - AR - DR - SP
+  1D | A8 | 9E | FF | 8A | 41 | 6C | 96 | 9E | FE
+  1F | 98 | 9E | FF | 8A | 41 | 6C | 97 | A0 | FE
+  21 | E0 | 9E | FF | 8A | 41 | 6C | 20 | 26 | FE
+  23 | A1 | 6F | FF | 0A | 41 | 6C | 9E | 6F | FE
+  24 | 60 | 6F | FF | 0E | 41 | 6F | 23 | 60 | FE
+  18 | B8 | 6F | FF | 0A | 41 | 6F | 25 | 18 | FE
+  1A | A0 | 9E | FF | 8A | 41 | 6F | 96 | 9E | FE
+  1B | 4C | 9F | FF | 8A | 41 | 6F | 1A | 4C | FE
+  1D | A8 | 9F | FF | 8A | 41 | 6F | 96 | 9F | FE
+  1F | 98 | 9F | FF | 8A | 41 | 6F | 97 | A0 | FE
+  21 | E0 | 9F | FF | 8A | 41 | 6F | 20 | 26 | FE
+  23 | A1 | 2C | FF | 0A | 41 | 6F | 9F | 2C | FE
+  24 | 60 | 2C | FF | 0E | 41 | 2C | 23 | 60 | FE
+  18 | B8 | 2C | FF | 0A | 41 | 2C | 25 | 18 | FE
+  1A | A0 | 9F | FF | 8A | 41 | 2C | 96 | 9F | FE
+  1B | 4C | A0 | FF | 8A | 41 | 2C | 1A | 4C | FE
+  1D | A8 | A0 | FF | 8A | 41 | 2C | 96 | A0 | FE
+  1F | 98 | A0 | FF | 7A | 41 | 2C | 97 | A0 | FE
+  21 | E0 | A0 | FF | 7A | 41 | 2C | 20 | 26 | FE
+  23 | A1 | 20 | FF | 1A | 41 | 2C | A0 | 20 | FE
+  CP - CR - AC - BR - SR - IR - OR - AR - DR - SP
+  24 | 60 | 20 | FF | 1E | 41 | 20 | 23 | 60 | FE
+  18 | B8 | 20 | FF | 1A | 41 | 20 | 25 | 18 | FE
+  1A | A0 | A0 | FF | 9A | 41 | 20 | 96 | A0 | FE
+  1B | 4C | A1 | FF | 8A | 41 | 20 | 1A | 4C | FE
+  1D | A8 | A1 | FF | 8A | 41 | 20 | 96 | A1 | FE
+  1F | 98 | A1 | FF | 1A | 41 | 20 | 97 | A0 | FE
+  26 | E0 | A1 | FF | 1A | 41 | 20 | 20 | 26 | FE
+  04 | 70 | A1 | FF | 1A | 41 | 20 | FF | 04 | FF
+  0B | B0 | A1 | FF | 1A | 41 | 20 | FF | 06 | FE
+  0C | 68 | 41 | FF | 1A | 6C | 20 | 0B | 68 | FE
+  0D | 60 | 41 | FF | 1E | 6C | 41 | 0C | 60 | FE
+  0F | F0 | 41 | FF | 1A | 6C | 41 | 0E | 11 | FE
+  0B | B8 | 41 | FF | 1A | 6C | 41 | 10 | 0B | FE
+  0C | 68 | 6C | FF | 1A | 69 | 41 | 0B | 68 | FE
+  0D | 60 | 6C | FF | 1E | 69 | 6C | 0C | 60 | FE
+  0F | F0 | 6C | FF | 1A | 69 | 6C | 0E | 11 | FE
+  0B | B8 | 6C | FF | 1A | 69 | 6C | 10 | 0B | FE
+  0C | 68 | 69 | FF | 1A | 63 | 6C | 0B | 68 | FE
+  0D | 60 | 69 | FF | 1E | 63 | 69 | 0C | 60 | FE
+  0F | F0 | 69 | FF | 1A | 63 | 69 | 0E | 11 | FE
+  CP - CR - AC - BR - SR - IR - OR - AR - DR - SP
+  0B | B8 | 69 | FF | 1A | 63 | 69 | 10 | 0B | FE
+  0C | 68 | 63 | FF | 1A | 65 | 69 | 0B | 68 | FE
+  0D | 60 | 63 | FF | 1E | 65 | 63 | 0C | 60 | FE
+  0F | F0 | 63 | FF | 1A | 65 | 63 | 0E | 11 | FE
+  0B | B8 | 63 | FF | 1A | 65 | 63 | 10 | 0B | FE
+  0C | 68 | 65 | FF | 12 | 65 | 63 | 0B | 68 | FE
+  0D | 60 | 65 | FF | 16 | 65 | 65 | 0C | 60 | FE
+  11 | F0 | 65 | FF | 12 | 65 | 65 | 0E | 11 | FE
+  06 | 70 | 65 | FF | 12 | 65 | 65 | FF | 06 | FF
+  08 | A0 | A2 | FF | 92 | 65 | 65 | A1 | A2 | FF
+  12 | B0 | A2 | FF | 92 | 65 | 65 | FF | 0A | FE
+  14 | A8 | A2 | FF | 92 | 65 | 65 | 96 | A2 | FE
+  16 | 91 | A3 | FF | 82 | 65 | 65 | A2 | 01 | FE
+  18 | A8 | A3 | FF | 82 | 65 | 65 | 97 | A3 | FE
+  1A | A0 | A2 | FF | 82 | 65 | 65 | 96 | A2 | FE
+  1B | 4C | A3 | FF | 82 | 65 | 65 | 1A | 4C | FE
+  1D | A8 | A3 | FF | 82 | 65 | 65 | 96 | A3 | FE
+  1F | 98 | A3 | FF | 72 | 65 | 65 | 97 | A3 | FE
+  21 | E0 | A3 | FF | 72 | 65 | 65 | 20 | 26 | FE
+  23 | A1 | 21 | FF | 12 | 65 | 65 | A3 | 21 | FE
+  CP - CR - AC - BR - SR - IR - OR - AR - DR - SP
+  24 | 60 | 21 | FF | 16 | 65 | 21 | 23 | 60 | FE
+  18 | B8 | 21 | FF | 12 | 65 | 21 | 25 | 18 | FE
+  1A | A0 | A3 | FF | 92 | 65 | 21 | 96 | A3 | FE
+  1B | 4C | A4 | FF | 82 | 65 | 21 | 1A | 4C | FE
+  1D | A8 | A4 | FF | 82 | 65 | 21 | 96 | A4 | FE
+  1F | 98 | A4 | FF | 12 | 65 | 21 | 97 | A3 | FE
+  26 | E0 | A4 | FF | 12 | 65 | 21 | 20 | 26 | FE
+  0A | 70 | A4 | FF | 12 | 65 | 21 | FF | 0A | FF
