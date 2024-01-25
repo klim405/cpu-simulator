@@ -159,7 +159,6 @@ class TranslatorASM:
                     current_section = 'data' if line[1:] == 'data' else 'text'
                     continue
                 if line:
-                    # print("???", line)
                     self.try_extract_label(line, current_section)
 
     def try_extract_label(self, line: str, section: Literal['text', 'data']) -> None:
@@ -186,9 +185,7 @@ class TranslatorASM:
                     self.current_addr = self.data_offset
                     continue
                 if line:
-                    # print('<<<', line)
                     match = ASMMatch(line)
-                    # print(match.match.groups())
                     mem.write(self.encode_line(match))
                     self.current_addr += match.get_size()
 

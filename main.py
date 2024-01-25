@@ -5,7 +5,7 @@ from translator_asm import TranslatorASM
 from utils.files import clean_memory
 
 
-def main(asm: str, inp: str, out: str, mem: str, micro: str, log: str, log_mode: str, limit: int):
+def run_simulator(asm: str, inp: str, out: str, mem: str, micro: str, log: str, log_mode: str, limit: int):
     clean_memory(mem)
     TranslatorASM(asm, mem).translate()
     cpu = CPU(Logger(log, log_mode), mem, micro, inp, out)
@@ -23,5 +23,5 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--tick-lim', default=20000000000, type=int)
     parser.add_argument('--log-mode', default='instr')
     args = parser.parse_args()
-    main(args.assembler, args.input, args.output, args.memory,
+    run_simulator(args.assembler, args.input, args.output, args.memory,
          args.microcode, args.log, args.log_mode, args.tick_lim)
