@@ -1,0 +1,12 @@
+.data
+str: "12345"
+a: 2
+
+.text
+ld ~str
+jump main
+add2: add a
+ret
+main: cla
+call add2
+hlt

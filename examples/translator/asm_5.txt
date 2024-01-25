@@ -1,0 +1,8 @@
+cla
+inc
+push
+inc
+push
+ld $2
+add $2
+hlt

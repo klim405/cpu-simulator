@@ -1,0 +1,13 @@
+.data
+a: 12
+b: -12
+_0: 0
+
+.text
+ld a
+cmp b
+jge equal
+hlt
+equal: cla
+inc
+hlt

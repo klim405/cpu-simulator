@@ -1,0 +1,10 @@
+.data
+string: 'My string'
+
+.text
+inc
+dec
+inc
+cmc
+cla
+hlt
