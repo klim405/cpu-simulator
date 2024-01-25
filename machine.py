@@ -250,7 +250,7 @@ class Logger:
         if self.log_counter % 20 == 0:
             if self.log_mode == 'tick':
                 self.write_in_log(self.get_reg_labels_with_tick())
-            else:
+            elif self.cpu.mc == 0:
                 self.write_in_log(self.get_reg_labels())
 
     def get_reg_vals(self) -> str:
@@ -347,7 +347,6 @@ class CPU:
             self.try_to_write_inp()
             self.execute_instruction()
             self.tick += 1
-            print(self.tick, self.data_path)
             self.logger.log()
 
     def try_to_read_out(self):

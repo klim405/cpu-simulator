@@ -42,6 +42,8 @@ MNEMONIC = {
     'JGE': 0xE4,
     'JLT': 0xE8,
     'JLE': 0xEC,
+    'JIU': 0xF0,
+    'JIS': 0xF4
 }
 
 
@@ -92,7 +94,7 @@ class ASMMatch:
         return int(self.match.group(13))
 
     def get_addr_mode(self):
-        addr = '+'
+        addr = '@'
         if self.match.group(12):
             addr = self.match.group(12)
         if self.match.group(9):
@@ -157,7 +159,7 @@ class TranslatorASM:
                     current_section = 'data' if line[1:] == 'data' else 'text'
                     continue
                 if line:
-                    print("???", line)
+                    # print("???", line)
                     self.try_extract_label(line, current_section)
 
     def try_extract_label(self, line: str, section: Literal['text', 'data']) -> None:
@@ -184,9 +186,9 @@ class TranslatorASM:
                     self.current_addr = self.data_offset
                     continue
                 if line:
-                    print('<<<', line)
+                    # print('<<<', line)
                     match = ASMMatch(line)
-                    print(match.match.groups())
+                    # print(match.match.groups())
                     mem.write(self.encode_line(match))
                     self.current_addr += match.get_size()
 
@@ -222,7 +224,7 @@ class TranslatorASM:
             else:
                 base_offset += self.data_offset
             return base_offset
-        return label_addr + self.text_offset if label_section == 'text' else self.data_offset
+        return label_addr + (self.text_offset if label_section == 'text' else self.data_offset)
 
     @staticmethod
     def calc_int_addr(match: ASMMatch) -> int:
